@@ -2,7 +2,6 @@
 
 #include <ida.hpp>
 #include <dbg.hpp>
-#include <idd.hpp>
 #include <loader.hpp>
 
 extern debugger_t debugger;

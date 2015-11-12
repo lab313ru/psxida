@@ -1,9 +1,15 @@
+#define WIN32_LEAN_AND_MEAN
+
+#include <Windows.h>
+#include <winsock.h>
+
 #include <ida.hpp>
 #include <idd.hpp>
 
 #include "debug.h"
 
 eventlist_t g_events;
+SOCKET g_sock = NULL;
 
 static const char *register_classes[] =
 {
@@ -334,7 +340,55 @@ register_info_t registers[] =
 // This function is called from the main thread
 static bool idaapi init_debugger(const char *hostname, int portnum, const char *password)
 {
-	return true;
+	WSADATA wsaData;
+	int wsaRes;
+	sockaddr_in saddr;
+	
+	// Initialize Winsock
+	wsaRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (wsaRes != 0) {
+		error("WSAStartup error: %d\n", wsaRes);
+		return false;
+	}
+
+	g_sock = socket(AF_INET, SOCK_STREAM, 0);
+
+	if (g_sock == INVALID_SOCKET) {
+		error("Socket error: %ld\n", WSAGetLastError());
+		WSACleanup();
+		return false;
+	}
+
+	saddr.sin_family = AF_INET;
+	saddr.sin_port = htons(portnum);
+	saddr.sin_addr.s_addr = inet_addr(hostname);
+
+	show_wait_box("Waiting for connection with PCSXR socket...");
+
+	fd_set readSet;
+	FD_ZERO(&readSet);
+	FD_SET(g_sock, &readSet);
+
+	while (true)
+	{
+		if (wasBreak())
+			break;
+		
+		if (select(0, &readSet, NULL, NULL, NULL) > 0)
+		{
+			if (FD_ISSET(g_sock, &readSet))
+			{
+				return true;
+			}
+		}
+		else
+		{
+			error("Connection error: %ld!", WSAGetLastError());
+			closesocket(g_sock);
+		}
+	}
+
+	return false;
 }
 
 // Terminate debugger
@@ -342,6 +396,12 @@ static bool idaapi init_debugger(const char *hostname, int portnum, const char *
 // This function is called from the main thread
 static bool idaapi term_debugger(void)
 {
+	if (g_sock)
+		closesocket(g_sock);
+
+	g_sock = NULL;
+	WSACleanup();
+
 	return true;
 }
 
@@ -351,7 +411,7 @@ static bool idaapi term_debugger(void)
 // This function is called from the main thread
 static int idaapi process_get_info(int n, process_info_t *info)
 {
-	return 0;
+	return 1;
 }
 
 // Start an executable to debug
@@ -433,7 +493,6 @@ static gdecode_t idaapi get_debug_event(debug_event_t *event, int timeout_ms)
 		// are there any pending events?
 		if (g_events.retrieve(event))
 		{
-			if (event->eid != PROCESS_EXIT) pause_execution();
 			return g_events.empty() ? GDE_ONE_EVENT : GDE_MANY_EVENTS;
 		}
 		if (g_events.empty())
@@ -447,7 +506,7 @@ static gdecode_t idaapi get_debug_event(debug_event_t *event, int timeout_ms)
 // This function is called from debthread
 static int idaapi continue_after_event(const debug_event_t *event)
 {
-
+	return 1;
 }
 
 // The following function will be called by the kernel each time
