@@ -1,22 +1,22 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <Windows.h>
-#include <winsock.h>
 
 #include <ida.hpp>
 #include <idd.hpp>
+#include <diskio.hpp>
 
 #include "debug.h"
 
 eventlist_t g_events;
-SOCKET g_sock = NULL;
+qthread_t psx_thread = NULL;
 
 static const char *register_classes[] =
 {
 	"General Purpose Registers",
-	"Coprocessor0 Registers",
-	"Cop2 data registers",
-	"Cop2 control registers",
+	//"Coprocessor0 Registers",
+	//"Cop2 data registers",
+	//"Cop2 control registers",
 	NULL,
 };
 
@@ -24,164 +24,6 @@ static const char *register_classes[] =
 #define RC_COP0      2
 #define RC_COP2_DATA 4
 #define RC_COP2_CTRL 8
-
-const char *fmt_SVector3D[] =
-{
-	"SVector3D",
-
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-};
-
-const char *fmt_SVector2D[] =
-{
-	"SVector2D",
-
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-	"x",
-
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-	"y",
-};
-
-const char *fmt_SVector2Dz[] =
-{
-	"SVector2Dz",
-
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-	"z",
-};
-
-const char *fmt_CBGR[] =
-{
-	"CBGR",
-
-	"r",
-	"r",
-	"r",
-	"r",
-	"r",
-	"r",
-	"r",
-	"r",
-
-	"g",
-	"g",
-	"g",
-	"g",
-	"g",
-	"g",
-	"g",
-	"g",
-
-	"b",
-	"b",
-	"b",
-	"b",
-	"b",
-	"b",
-	"b",
-	"b",
-
-	"c",
-	"c",
-	"c",
-	"c",
-	"c",
-	"c",
-	"c",
-	"c",
-};
 
 register_info_t registers[] =
 {
@@ -236,103 +78,6 @@ register_info_t registers[] =
 
 	{ "PC", REGISTER_ADDRESS | REGISTER_IP, RC_GP, dt_dword, NULL, 0 },
 
-	/*
-	Index,     Random,    EntryLo0,  BPC,
-	Context,   BDA,       PIDMask,   DCIC,
-	BadVAddr,  BDAM,      EntryHi,   BPCM,
-	Status,    Cause,     EPC,       PRid,
-	Config,    LLAddr,    WatchLO,   WatchHI,
-	XContext,  Reserved1, Reserved2, Reserved3,
-	Reserved4, Reserved5, ECC,       CacheErr,
-	TagLo,     TagHi,     ErrorEPC,  Reserved6
-	*/
-
-	{ "Index", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "Random", REGISTER_READONLY, RC_COP0, dt_dword, NULL, 0 },
-	{ "EntryLo0", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "BPC", REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
-	{ "Context", REGISTER_READONLY | REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
-	{ "BDA", REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
-	{ "PIDMask", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "DCIC", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "BadVAddr", REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
-	{ "BDAM", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "EntryHi", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "BPCM", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "Status", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "Cause", REGISTER_READONLY, RC_COP0, dt_dword, NULL, 0 },
-	{ "EPC", REGISTER_READONLY | REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
-	{ "PRid", REGISTER_READONLY, RC_COP0, dt_dword, NULL, 0 },
-	{ "Config", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "LLAddr", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "WatchLO", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "WatchHI", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "XContext", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "Reserved1", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "Reserved2", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "Reserved3", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "Reserved4", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "Reserved5", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "ECC", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "CacheErr", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "TagLo", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "TagHi", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "ErrorEPC", NULL, RC_COP0, dt_dword, NULL, 0 },
-	{ "Reserved6", NULL, RC_COP0, dt_dword, NULL, 0 },
-
-	/*
-	SVector3D     v0, v1, v2;
-	CBGR          rgb;
-	s32          otz;
-	s32          ir0, ir1, ir2, ir3;
-	SVector2D     sxy0, sxy1, sxy2, sxyp;
-	SVector2Dz    sz0, sz1, sz2, sz3;
-	CBGR          rgb0, rgb1, rgb2;
-	s32          reserved;
-	s32          mac0, mac1, mac2, mac3;
-	u32 irgb, orgb;
-	s32          lzcs, lzcr;
-	*/
-
-	{ "v0", REGISTER_CUSTFMT, RC_COP2_DATA, dt_qword, fmt_SVector3D, 0 },
-	{ "v1", REGISTER_CUSTFMT, RC_COP2_DATA, dt_qword, fmt_SVector3D, 0 },
-	{ "v2", REGISTER_CUSTFMT, RC_COP2_DATA, dt_qword, fmt_SVector3D, 0 },
-
-	{ "rgb", REGISTER_CUSTFMT, RC_COP2_DATA, dt_dword, fmt_CBGR, 0 },
-
-	{ "otz", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
-
-	{ "ir0", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
-	{ "ir1", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
-	{ "ir2", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
-	{ "ir3", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
-
-	{ "sxy0", REGISTER_CUSTFMT, RC_COP2_DATA, dt_dword, fmt_SVector2D, 0 },
-	{ "sxy1", REGISTER_CUSTFMT, RC_COP2_DATA, dt_dword, fmt_SVector2D, 0 },
-	{ "sxy2", REGISTER_CUSTFMT, RC_COP2_DATA, dt_dword, fmt_SVector2D, 0 },
-	{ "sxyp", REGISTER_CUSTFMT, RC_COP2_DATA, dt_dword, fmt_SVector2D, 0 },
-
-	{ "sz0", REGISTER_CUSTFMT, RC_COP2_DATA, dt_dword, fmt_SVector2Dz, 0 },
-	{ "sz1", REGISTER_CUSTFMT, RC_COP2_DATA, dt_dword, fmt_SVector2Dz, 0 },
-	{ "sz2", REGISTER_CUSTFMT, RC_COP2_DATA, dt_dword, fmt_SVector2Dz, 0 },
-	{ "sz3", REGISTER_CUSTFMT, RC_COP2_DATA, dt_dword, fmt_SVector2Dz, 0 },
-
-	{ "rgb0", REGISTER_CUSTFMT, RC_COP2_DATA, dt_dword, fmt_CBGR, 0 },
-	{ "rgb1", REGISTER_CUSTFMT, RC_COP2_DATA, dt_dword, fmt_CBGR, 0 },
-	{ "rgb2", REGISTER_CUSTFMT, RC_COP2_DATA, dt_dword, fmt_CBGR, 0 },
-
-	{ "reserved", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
-
-	{ "mac0", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
-	{ "mac1", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
-	{ "mac2", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
-	{ "mac3", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
-
-	{ "irbg", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
-	{ "orgb", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
-
-	{ "lzcs", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
-	{ "lzcr", NULL, RC_COP2_DATA, dt_dword, NULL, 0 },
 };
 
 // Initialize debugger
@@ -340,55 +85,7 @@ register_info_t registers[] =
 // This function is called from the main thread
 static bool idaapi init_debugger(const char *hostname, int portnum, const char *password)
 {
-	WSADATA wsaData;
-	int wsaRes;
-	sockaddr_in saddr;
-	
-	// Initialize Winsock
-	wsaRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (wsaRes != 0) {
-		error("WSAStartup error: %d\n", wsaRes);
-		return false;
-	}
-
-	g_sock = socket(AF_INET, SOCK_STREAM, 0);
-
-	if (g_sock == INVALID_SOCKET) {
-		error("Socket error: %ld\n", WSAGetLastError());
-		WSACleanup();
-		return false;
-	}
-
-	saddr.sin_family = AF_INET;
-	saddr.sin_port = htons(portnum);
-	saddr.sin_addr.s_addr = inet_addr(hostname);
-
-	show_wait_box("Waiting for connection with PCSXR socket...");
-
-	fd_set readSet;
-	FD_ZERO(&readSet);
-	FD_SET(g_sock, &readSet);
-
-	while (true)
-	{
-		if (wasBreak())
-			break;
-		
-		if (select(0, &readSet, NULL, NULL, NULL) > 0)
-		{
-			if (FD_ISSET(g_sock, &readSet))
-			{
-				return true;
-			}
-		}
-		else
-		{
-			error("Connection error: %ld!", WSAGetLastError());
-			closesocket(g_sock);
-		}
-	}
-
-	return false;
+	return true;
 }
 
 // Terminate debugger
@@ -396,11 +93,13 @@ static bool idaapi init_debugger(const char *hostname, int portnum, const char *
 // This function is called from the main thread
 static bool idaapi term_debugger(void)
 {
-	if (g_sock)
-		closesocket(g_sock);
-
-	g_sock = NULL;
-	WSACleanup();
+	if (psx_thread != NULL)
+	{
+		qthread_join(psx_thread);
+		qthread_free(psx_thread);
+		qthread_kill(psx_thread);
+		psx_thread = NULL;
+	}
 
 	return true;
 }
@@ -411,7 +110,33 @@ static bool idaapi term_debugger(void)
 // This function is called from the main thread
 static int idaapi process_get_info(int n, process_info_t *info)
 {
-	return 1;
+	return 0;
+}
+
+HINSTANCE GetHInstance()
+{
+	MEMORY_BASIC_INFORMATION mbi;
+	SetLastError(ERROR_SUCCESS);
+	VirtualQuery(GetHInstance, &mbi, sizeof(mbi));
+
+	return (HINSTANCE)mbi.AllocationBase;
+}
+char cmdline[2048];
+static int idaapi psx_process(void *ud)
+{
+	SetCurrentDirectoryA(idadir("plugins"));
+
+	int rc = WinMain(GetHInstance(), (HINSTANCE)NULL, cmdline, SW_NORMAL);
+
+	debug_event_t ev;
+	ev.eid = PROCESS_EXIT;
+	ev.pid = 1;
+	ev.handled = true;
+	ev.exit_code = rc;
+
+	g_events.enqueue(ev, IN_BACK);
+
+	return rc;
 }
 
 // Start an executable to debug
@@ -426,27 +151,10 @@ static int idaapi start_process(const char *path,
 	const char *input_path,
 	uint32 input_file_crc32)
 {
-	return 1;
-}
+	qsnprintf(cmdline, sizeof(cmdline), "%s", args);
 
-// Attach to an existing running process
-// 1-ok, 0-failed, -1-network error
-// event_id should be equal to -1 if not attaching to a crashed process
-// This function is called from debthread
-static int idaapi psx_attach_process(pid_t pid, int event_id)
-{
-	return 1;
-}
+	psx_thread = qthread_create(psx_process, NULL);
 
-// Detach from the debugged process
-// May be called while the process is running or suspended.
-// Must detach from the process in any case.
-// The kernel will repeatedly call get_debug_event() and until PROCESS_DETACH.
-// In this mode, all other events will be automatically handled and process will be resumed.
-// 1-ok, 0-failed, -1-network error
-// This function is called from debthread
-static int idaapi psx_detach_process(void)
-{
 	return 1;
 }
 
@@ -540,7 +248,7 @@ static int idaapi thread_continue(thid_t tid) // Resume a suspended thread
 	return 1;
 }
 
-static int idaapi thread_set_step(thid_t tid) // Run one instruction in the thread
+static int idaapi psx_set_resume_mode(thid_t tid, resume_mode_t resmod)// Run one instruction in the thread
 {
 	return 1;
 }
@@ -651,7 +359,7 @@ debugger_t debugger =
 	456,
 	"mipsrl",
 
-	DBG_FLAG_REMOTE | DBG_FLAG_HWDATBPT_ONE | DBG_FLAG_CAN_CONT_BPT | DBG_FLAG_NEEDPORT | DBG_FLAG_NOSTARTDIR | DBG_FLAG_NOPARAMETERS | DBG_FLAG_NOPASSWORD,
+	DBG_FLAG_NOHOST | DBG_FLAG_HWDATBPT_ONE | DBG_FLAG_CAN_CONT_BPT | DBG_FLAG_NOSTARTDIR | DBG_FLAG_NOPARAMETERS | DBG_FLAG_NOPASSWORD,
 	register_classes,
 	RC_GP,
 	registers,
@@ -660,9 +368,10 @@ debugger_t debugger =
 	0x1000,
 
 	NULL,
-	NULL,
 	0,
 	0,
+
+	DBG_RESMOD_STEP_INTO | DBG_RESMOD_STEP_OVER,
 
 	init_debugger,
 	term_debugger,
@@ -670,8 +379,9 @@ debugger_t debugger =
 	process_get_info,
 
 	start_process,
-	psx_attach_process,
-	psx_detach_process,
+	NULL,
+	NULL,
+
 	rebase_if_required_to,
 	prepare_to_pause_process,
 	psx_exit_process,
@@ -684,7 +394,7 @@ debugger_t debugger =
 
 	thread_suspend,
 	thread_continue,
-	thread_set_step,
+	psx_set_resume_mode,
 
 	read_registers,
 	write_register,
@@ -703,5 +413,5 @@ debugger_t debugger =
 	NULL,
 	NULL,
 
-	map_address,
+	NULL,
 };
