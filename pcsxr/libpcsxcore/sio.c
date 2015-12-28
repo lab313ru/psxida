@@ -1202,8 +1202,8 @@ void GetMcdBlockInfo(int mcd, int block, McdBlock *Info) {
 
 	memset(Info, 0, sizeof(McdBlock));
 
-	if (mcd == 1) data = Mcd1Data;
-	if (mcd == 2) data = Mcd2Data;
+	if (mcd == 1) data = (unsigned char *)Mcd1Data;
+	if (mcd == 2) data = (unsigned char *)Mcd2Data;
 
 	ptr = data + block * 8192 + 2;
 
@@ -1213,8 +1213,8 @@ void GetMcdBlockInfo(int mcd, int block, McdBlock *Info) {
 
 	x = 0;
 
-	str = Info->Title;
-	sstr = Info->sTitle;
+	str = (unsigned char *)Info->Title;
+	sstr = (unsigned char *)Info->sTitle;
 
 	for (i = 0; i < 48; i++) {
 		c = *(ptr) << 8;
@@ -1250,8 +1250,8 @@ void GetMcdBlockInfo(int mcd, int block, McdBlock *Info) {
 		ptr += 2;
 	}
 
-	trim(str);
-	trim(sstr);
+	trim((char *)str);
+	trim((char *)sstr);
 
 	ptr = data + block * 8192 + 0x60; // icon palette data
 
@@ -1277,9 +1277,9 @@ void GetMcdBlockInfo(int mcd, int block, McdBlock *Info) {
 	Info->Flags = *ptr;
 
 	ptr += 0xa;
-	strncpy(Info->ID, ptr, 12);
+	strncpy(Info->ID, (const char *)ptr, 12);
 	ptr += 12;
-	strncpy(Info->Name, ptr, 16);
+	strncpy(Info->Name, (const char *)ptr, 16);
 }
 
 int sioFreeze(gzFile f, int Mode) {

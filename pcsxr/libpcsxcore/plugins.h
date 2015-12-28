@@ -20,10 +20,6 @@
 #ifndef __PLUGINS_H__
 #define __PLUGINS_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "psxcommon.h"
 
 #ifndef _WIN32
@@ -54,9 +50,9 @@ typedef long (CALLBACK* SIO1open)(HWND);
 #include "psemu_plugin_defs.h"
 #include "decode_xa.h"
 
-int __cdecl LoadPlugins();
+int LoadPlugins();
 void ReleasePlugins();
-int __cdecl OpenPlugins();
+int OpenPlugins(HWND hWnd);
 void ClosePlugins();
 
 typedef unsigned long (CALLBACK* PSEgetLibType)(void);
@@ -420,7 +416,4 @@ const char *GetIsoFile(void);
 boolean UsingIso(void);
 void SetCdOpenCaseTime(s64 time);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -171,7 +171,7 @@ void PADhandleKey(int key) {
 	}
 }
 
-char charsTable[4] = { "|/-\\" };
+char charsTable[] = "|/-\\";
 
 BOOL CALLBACK ConnectDlgProc(HWND hW, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	char str[256];
@@ -304,7 +304,7 @@ int _OpenPlugins(HWND hWnd) {
 	return 0;
 }
 
-int __cdecl OpenPlugins(HWND hWnd, int internaliso) {
+int OpenPlugins(HWND hWnd) {
 	int ret;
 
 	while ((ret = _OpenPlugins(hWnd)) == -2) {

@@ -1,10 +1,6 @@
 #ifndef _PSEMU_PLUGIN_DEFS_H
 #define _PSEMU_PLUGIN_DEFS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // header version
 #define _PPDK_HEADER_VERSION		3
 
@@ -280,7 +276,4 @@ typedef struct {
     key is a XK_?? (X11) keycode.
 */
 
-#ifdef __cplusplus
-}
-#endif
 #endif // _PSEMU_PLUGIN_DEFS_H

@@ -20,10 +20,6 @@
 #ifndef __R3000A_H__
 #define __R3000A_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "psxcommon.h"
 #include "psxmem.h"
 #include "psxcounters.h"
@@ -346,7 +342,4 @@ void psxDelayTest(int reg, u32 bpc);
 void psxTestSWInts();
 void psxJumpTest();
 
-#ifdef __cplusplus
-}
-#endif
 #endif

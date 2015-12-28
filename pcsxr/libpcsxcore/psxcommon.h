@@ -25,10 +25,6 @@
 #ifndef __PSXCOMMON_H__
 #define __PSXCOMMON_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "config.h"
 
 // System includes
@@ -206,7 +202,4 @@ void EmuReset();
 void EmuShutdown();
 void EmuUpdate();
 
-#ifdef __cplusplus
-}
-#endif
 #endif

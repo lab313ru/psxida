@@ -26,18 +26,6 @@
 #define PREFIX "./"
 #endif
 
-#ifndef inline
-#ifdef _DEBUG
-#define inline /* */
-#else
-#ifdef _MSC_VER
-#define inline __forceinline
-#else
-#define inline __inline__
-#endif
-#endif
-#endif
-
 #ifdef _MSC_VER
 #pragma warning (disable:4133)
 #pragma warning (disable:4142)

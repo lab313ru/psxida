@@ -21,10 +21,6 @@
 #ifndef _SIO_H_
 #define _SIO_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "psxcommon.h"
 #include "r3000a.h"
 #include "psxmem.h"
@@ -73,7 +69,4 @@ void GetMcdBlockInfo(int mcd, int block, McdBlock *info);
 
 void CALLBACK SIO1irq(void);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

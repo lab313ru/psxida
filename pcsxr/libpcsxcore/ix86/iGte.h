@@ -20,10 +20,6 @@
 #ifndef __IGTE_H__
 #define __IGTE_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "../r3000a.h"
 #include "../psxmem.h"
 
@@ -65,7 +61,4 @@ CP2_FUNC(GPF);
 CP2_FUNC(GPL);
 CP2_FUNC(NCCT);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

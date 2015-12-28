@@ -1,7 +1,7 @@
 ; gpuPeopsOpenGL.def : Declares the module parameters for the DLL.
 
 LIBRARY      "gpuPeopsOpenGL"
-DESCRIPTION  'gpuPeopsOpenGL OpenGL Windows Dynamic Link Library'
+; DESCRIPTION  'gpuPeopsOpenGL OpenGL Windows Dynamic Link Library'
 EXPORTS
     ; Explicit exports can go here
 	PSEgetLibType		@2

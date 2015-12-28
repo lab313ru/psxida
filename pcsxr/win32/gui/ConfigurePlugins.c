@@ -19,6 +19,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <stdio.h>
+#include <shlobj.h>
 #include "psxcommon.h"
 #include "plugin.h"
 #include "plugins.h"
@@ -488,8 +489,6 @@ void TestSIO1(HWND hW) {
 #endif
 }
 
-
-#include <shlobj.h>
 
 int SelectPath(HWND hW, char *Title, char *Path) {
 	LPITEMIDLIST pidl;

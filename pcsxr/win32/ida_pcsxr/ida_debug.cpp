@@ -6,15 +6,13 @@
 
 #include "ida_debug.h"
 
-extern "C"
-{
 #include "psxcommon.h"
 #include "r3000a.h"
 #include "debug.h"
 #include "psxmem.h"
+#include "Win32.h"
 
-	int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
-};
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
 
 struct breakpoint_s;
 typedef breakpoint_s breakpoint_t;
@@ -109,14 +107,6 @@ static bool idaapi init_debugger(const char *hostname, int portnum, const char *
 // This function is called from the main thread
 static bool idaapi term_debugger(void)
 {
-	if (psx_thread != NULL)
-	{
-		qthread_join(psx_thread);
-		qthread_free(psx_thread);
-		qthread_kill(psx_thread);
-		psx_thread = NULL;
-	}
-
 	return true;
 }
 
@@ -145,6 +135,17 @@ static int idaapi psx_process(void *ud)
 	WinMain(GetHInstance(), (HINSTANCE)NULL, cmdline, SW_NORMAL);
 
 	return 0;
+}
+
+static void term_psx_process()
+{
+	if (psx_thread != NULL)
+	{
+		qthread_join(psx_thread);
+		qthread_free(psx_thread);
+		qthread_kill(psx_thread);
+		psx_thread = NULL;
+	}
 }
 
 // Start an executable to debug
@@ -200,7 +201,12 @@ static int idaapi prepare_to_pause_process(void)
 static int idaapi psx_exit_process(void)
 {
 	ResumeDebugger();
-	StopDebugger();
+	if (Running) ClosePlugins();
+
+	SysClose();
+	SaveConfig();
+
+	term_psx_process();
 	return 1;
 }
 
@@ -239,7 +245,11 @@ static int idaapi continue_after_event(const debug_event_t *event)
 			break;
 		}
 		break;
+	case PROCESS_EXIT:
+		term_psx_process();
+		break;
 	}
+	
 	return 1;
 }
 

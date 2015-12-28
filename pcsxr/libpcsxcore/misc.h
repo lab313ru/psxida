@@ -20,10 +20,6 @@
 #ifndef __MISC_H__
 #define __MISC_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "psxcommon.h"
 #include "coff.h"
 #include "plugins.h"
@@ -79,7 +75,4 @@ void CleanupMemSaveStates(); // Removes all save states stored by memory funcs l
 void trim(char *str);
 u16 calcCrc(u8 *d, int len);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

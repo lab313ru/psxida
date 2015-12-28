@@ -20,10 +20,6 @@
 #ifndef __SPU_H__
 #define __SPU_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "psxcommon.h"
 #include "plugins.h"
 #include "r3000a.h"
@@ -41,7 +37,4 @@ extern "C" {
 
 void CALLBACK SPUirq(void);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -731,7 +731,7 @@ void CALLBACK clearDynarec(void) {
 	psxCpu->Reset();
 }
 
-int  __cdecl LoadPlugins() {
+int LoadPlugins() {
 	long ret;
 	char Plugin[MAXPATHLEN];
 

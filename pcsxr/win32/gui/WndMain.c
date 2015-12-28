@@ -49,6 +49,9 @@ extern eventlist_t g_events;
 #endif
 #endif
 
+AppData gApp;
+HANDLE hConsole;
+
 int AccBreak = 0;
 int ConfPlug = 0;
 int StatesC = 0;
@@ -253,11 +256,6 @@ void RunGui() {
 		if (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-
-#ifndef C_IDA_DEBUG
-			if (msg.message == WM_QUIT)
-				break;
-#endif
 		}
 		else
 		{
@@ -468,11 +466,11 @@ LRESULT WINAPI MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 					SaveConfig();
 					PostQuitMessage(0);
 #ifndef C_IDA_DEBUG
-					break;
-#else
 					exit(0);
-					return TRUE;
+#else
+					TerminateThread(GetCurrentThread(), 0);
 #endif
+					return TRUE;
 
 				case ID_FILE_RUN_CD:
 					SetIsoFile(NULL);
@@ -754,17 +752,6 @@ LRESULT WINAPI MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 			PADhandleKey(wParam);
 			return TRUE;
 
-#ifndef C_IDA_DEBUG
-		case WM_CLOSE:
-			if (Running)
-			{
-				Running = 0;
-				ResumeDebugger();
-				RestoreWindow();
-				AccBreak = 0;
-			}
-#endif
-
 		case WM_DESTROY:
 			if (!AccBreak) {
 				if (Running) ClosePlugins();
@@ -774,14 +761,6 @@ LRESULT WINAPI MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 #ifndef C_IDA_DEBUG
 				exit(0);
 #else
-				debug_event_t ev;
-				ev.eid = PROCESS_EXIT;
-				ev.pid = 1;
-				ev.handled = true;
-				ev.exit_code = 0;
-
-				g_events.enqueue(ev, IN_BACK);
-
 				TerminateThread(GetCurrentThread(), 0);
 #endif
 			}
@@ -789,11 +768,7 @@ LRESULT WINAPI MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 			DeleteObject(hBm);
 			DeleteDC(hdcmem);
-#ifndef C_IDA_DEBUG
-			break;
-#else
 			return TRUE;
-#endif
 
 		case WM_EXITSIZEMOVE:
 			if(Config.SaveWindowPos) {
@@ -805,8 +780,10 @@ LRESULT WINAPI MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 		case WM_QUIT:
 			SaveConfig();
-#ifdef C_IDA_DEBUG
+#ifndef C_IDA_DEBUG
 			exit(0);
+#else
+			TerminateThread(GetCurrentThread(), 0);
 #endif
 			break;
 
@@ -1246,7 +1223,7 @@ BOOL CALLBACK ConfigureMcdsDlgProc(HWND hW, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 					Edit_GetText(GetDlgItem(hW,IDC_MCD1), str, 256);
 					i = ListView_GetSelectionMark(GetDlgItem(mcdDlg, IDC_LIST1));
-					data = Mcd1Data;
+					data = (unsigned char *)Mcd1Data;
 
 					i++;
 
@@ -1266,7 +1243,7 @@ BOOL CALLBACK ConfigureMcdsDlgProc(HWND hW, UINT uMsg, WPARAM wParam, LPARAM lPa
 					for (j=0; j<127; j++) xor^=*ptr++;
 					*ptr = xor;
 
-					SaveMcd(str, data, i * 128, 128);
+					SaveMcd(str, (char *)data, i * 128, 128);
 					UpdateMcdDlg();
 				}
 
@@ -1280,7 +1257,7 @@ BOOL CALLBACK ConfigureMcdsDlgProc(HWND hW, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 					Edit_GetText(GetDlgItem(hW,IDC_MCD2), str, 256);
 					i = ListView_GetSelectionMark(GetDlgItem(mcdDlg, IDC_LIST2));
-					data = Mcd2Data;
+					data = (unsigned char *)Mcd2Data;
 
 					i++;
 
@@ -1300,7 +1277,7 @@ BOOL CALLBACK ConfigureMcdsDlgProc(HWND hW, UINT uMsg, WPARAM wParam, LPARAM lPa
 					for (j=0; j<127; j++) xor^=*ptr++;
 					*ptr = xor;
 
-					SaveMcd(str, data, i * 128, 128);
+					SaveMcd(str, (char *)data, i * 128, 128);
 					UpdateMcdDlg();
 				}
 
@@ -1454,7 +1431,11 @@ BOOL CALLBACK ConfigureCpuDlgProc(HWND hW, UINT uMsg, WPARAM wParam, LPARAM lPar
 						else psxCpu = &psxRec;
 						if (psxCpu->Init() == -1) {
 							SysClose();
+#ifndef C_IDA_DEBUG
 							exit(1);
+#else
+							TerminateThread(GetCurrentThread(), 1);
+#endif
 						}
 						psxCpu->Reset();
 					}
@@ -1885,7 +1866,7 @@ int SysInit() {
 	setvbuf(emuLog, NULL,  _IONBF, 0);
 #endif
 
-	while (LoadPlugins(0) == -1) {
+	while (LoadPlugins() == -1) {
 		CancelQuit = 1;
 		ConfigurePlugins(gApp.hWnd);
 		CancelQuit = 0;
@@ -1910,6 +1891,16 @@ void SysClose() {
 	if (Config.PsxOut) CloseConsole();
 
 	if (emuLog != NULL) fclose(emuLog);
+
+#ifdef C_IDA_DEBUG
+	debug_event_t ev;
+	ev.eid = PROCESS_EXIT;
+	ev.pid = 1;
+	ev.handled = true;
+	ev.exit_code = 0;
+
+	g_events.enqueue(ev, IN_BACK);
+#endif
 }
 
 void SysPrintf(const char *fmt, ...) {

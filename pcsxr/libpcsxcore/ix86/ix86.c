@@ -73,7 +73,7 @@ void x86Align(int bytes) {
 	write8((0xC0) | (to)); }
 
 #define J8Rel(cc, to) { \
-	write8(cc); write8(to); return x86Ptr - 1; }
+	write8(cc); write8(to); return (u8 *)(x86Ptr - 1); }
 
 #define J32Rel(cc, to) { \
 	write8(0x0F); write8(cc); write32(to); return (u32*)(x86Ptr - 4); }
@@ -713,7 +713,7 @@ void NEG32R(int from) {
 u8*  JMP8(u8 to) {
 	write8(0xEB); 
 	write8(to);
-	return x86Ptr - 1;
+	return (u8 *)(x86Ptr - 1);
 }
 
 /* jmp rel32 */

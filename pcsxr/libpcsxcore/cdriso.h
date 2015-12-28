@@ -21,19 +21,15 @@
 #ifndef CDRISO_H
 #define CDRISO_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stdio.h>
 
 int handleecm(const char *isoname, FILE* cdh, s32* accurate_length);
 int aropen(FILE* fparchive, const char* _fn);
 void cdrIsoInit(void);
 int cdrIsoActive(void);
+int handlearchive(const char *isoname, s32* accurate_length);
 
 extern unsigned int cdrIsoMultidiskCount;
 extern unsigned int cdrIsoMultidiskSelect;
 
-#ifdef __cplusplus
-}
-#endif
 #endif

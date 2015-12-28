@@ -133,7 +133,7 @@ enum seeked_state {
 static struct CdrStat stat;
 
 extern unsigned int msf2sec(const char *msf);
-extern void sec2msf(unsigned int s, const char *msf);
+extern void sec2msf(unsigned int s, char *msf);
 
 // for that weird psemu API..
 static unsigned int fsm2sec(const u8 *msf) {
@@ -364,7 +364,7 @@ static void Find_CurTrack(const u8 *time)
 {
 	int current, sect;
 
-	current = msf2sec(time);
+	current = msf2sec((char *)time);
 
 	for (cdr.CurTrack = 1; cdr.CurTrack < cdr.ResultTN[1]; cdr.CurTrack++) {
 		CDR_getTD(cdr.CurTrack + 1, cdr.ResultTD);
@@ -396,7 +396,7 @@ static void generate_subq(const u8 *time)
 		next[2] = cdr.SetSectorEnd[0];
 	}
 
-	this_s = msf2sec(time);
+	this_s = msf2sec((char *)time);
 	start_s = fsm2sec(start);
 	next_s = fsm2sec(next);
 
@@ -415,7 +415,7 @@ static void generate_subq(const u8 *time)
 		cdr.subq.Index = 0;
 		relative_s = -relative_s;
 	}
-	sec2msf(relative_s, cdr.subq.Relative);
+	sec2msf(relative_s, (char *)cdr.subq.Relative);
 
 	cdr.subq.Track = itob(cdr.CurTrack);
 	cdr.subq.Relative[0] = itob(cdr.subq.Relative[0]);
@@ -1327,8 +1327,8 @@ void cdrWrite1(unsigned char rt) {
 		for (i = 0; i < 3; i++)
 			set_loc[i] = btoi(cdr.Param[i]);
 
-		i = msf2sec(cdr.SetSectorPlay);
-		i = abs(i - (int)msf2sec(set_loc));
+		i = msf2sec((const char *)cdr.SetSectorPlay);
+		i = abs(i - (int)msf2sec((const char *)set_loc));
 		if (i > 16)
 			cdr.Seeked = SEEK_PENDING;
 

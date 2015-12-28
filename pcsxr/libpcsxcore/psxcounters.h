@@ -20,10 +20,6 @@
 #ifndef __PSXCOUNTERS_H__
 #define __PSXCOUNTERS_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "psxcommon.h"
 #include "r3000a.h"
 #include "psxmem.h"
@@ -44,7 +40,4 @@ u32 psxRcntRtarget(u32 index);
 
 s32 psxRcntFreeze(gzFile f, s32 Mode);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -128,7 +128,7 @@ int GetCdromFile(u8 *mdir, u8 *time, s8 *filename) {
 				mmssdd(dir->extent, (char *)time);
 				READDIR(ddir);
 				i = 0;
-				mdir = ddir;
+				mdir = (u8 *)ddir;
 			}
 		} else {
 			if (!strnicmp((char *)&dir->name[0], filename, strlen(filename))) {
@@ -178,7 +178,7 @@ int LoadCdrom() {
 		if (GetCdromFile(mdir, time, exename) == -1) {
 			sscanf((char *)buf + 12, "BOOT = cdrom:%255s", exename);
 			if (GetCdromFile(mdir, time, exename) == -1) {
-				char *ptr = strstr(buf + 12, "cdrom:");
+				char *ptr = strstr((char *)(buf + 12), "cdrom:");
 				if (ptr != NULL) {
 					ptr += 6;
 					while (*ptr == '\\' || *ptr == '/') ptr++;
@@ -252,7 +252,7 @@ int LoadCdromFile(const char *filename, EXE_HEADER *head) {
 
 	READDIR(mdir);
 
-	if (GetCdromFile(mdir, time, exename) == -1) return -1;
+	if (GetCdromFile(mdir, time, (s8 *)exename) == -1) return -1;
 
 	READTRACK();
 
@@ -298,7 +298,7 @@ int CheckCdrom() {
 	memset(CdromId, 0, sizeof(CdromId));
 	memset(exename, 0, sizeof(exename));
 
-	strncpy(CdromLabel, buf + 52, 32);
+	strncpy(CdromLabel, (const char *)(buf + 52), 32);
 
 	// skip head and sub, and go to the root directory record
 	dir = (struct iso_directory_record *)&buf[12 + 156]; 
@@ -314,7 +314,7 @@ int CheckCdrom() {
 		if (GetCdromFile(mdir, time, exename) == -1) {
 			sscanf((char *)buf + 12, "BOOT = cdrom:%255s", exename);
 			if (GetCdromFile(mdir, time, exename) == -1) {
-				char *ptr = strstr(buf + 12, "cdrom:");			// possibly the executable is in some subdir
+				char *ptr = strstr((char *)(buf + 12), "cdrom:");			// possibly the executable is in some subdir
 				if (ptr != NULL) {
 					ptr += 6;
 					while (*ptr == '\\' || *ptr == '/') ptr++;
