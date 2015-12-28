@@ -54,9 +54,9 @@ typedef long (CALLBACK* SIO1open)(HWND);
 #include "psemu_plugin_defs.h"
 #include "decode_xa.h"
 
-int LoadPlugins();
+int __cdecl LoadPlugins();
 void ReleasePlugins();
-int OpenPlugins();
+int __cdecl OpenPlugins();
 void ClosePlugins();
 
 typedef unsigned long (CALLBACK* PSEgetLibType)(void);

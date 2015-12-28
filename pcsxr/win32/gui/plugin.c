@@ -304,7 +304,7 @@ int _OpenPlugins(HWND hWnd) {
 	return 0;
 }
 
-int OpenPlugins(HWND hWnd, int internaliso) {
+int __cdecl OpenPlugins(HWND hWnd, int internaliso) {
 	int ret;
 
 	while ((ret = _OpenPlugins(hWnd)) == -2) {

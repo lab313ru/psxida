@@ -15,6 +15,14 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses>.
  */
 
+#ifdef C_IDA_DEBUG
+#include "ida_pcsxr\ida_debug.h"
+extern eventlist_t g_events;
+static bool handled_ida_event = false;
+static bool boot_found = false;
+extern ea_t boot_address;
+#endif
+
 #include "psxcommon.h"
 #include "r3000a.h"
 #include "debug.h"
@@ -229,7 +237,10 @@ Error messages (5xx):
     Invalid breakpoint address.
 */
 
-static int debugger_active = 0, paused = 0, trace = 0, printpc = 0, reset = 0, resetting = 0;
+#ifndef C_IDA_DEBUG
+static
+#endif
+int debugger_active = 0, paused = 0, trace = 0, printpc = 0, reset = 0, resetting = 0;
 static int mapping_e = 0, mapping_r8 = 0, mapping_r16 = 0, mapping_r32 = 0, mapping_w8 = 0, mapping_w16 = 0, mapping_w32 = 0;
 static int breakmp_e = 0, breakmp_r8 = 0, breakmp_r16 = 0, breakmp_r32 = 0, breakmp_w8 = 0, breakmp_w16 = 0, breakmp_w32 = 0;
 
@@ -312,6 +323,19 @@ breakpoint_t *find_breakpoint(int number) {
     return 0;
 }
 
+#ifdef C_IDA_DEBUG
+breakpoint_t *find_breakpoint_by_addr(u32 address) {
+	breakpoint_t *p;
+
+	for (p = first; p; p = next_breakpoint(p)) {
+		if (p->address == address)
+			return p;
+	}
+
+	return 0;
+}
+#endif
+
 void StartDebugger() {
     if (debugger_active)
         return;
@@ -385,11 +409,52 @@ int IsMapMarked(u32 address, int mask) {
 }
 
 void ProcessDebug() {
+#ifdef C_IDA_DEBUG
+	handled_ida_event = false;
+
+	if (!boot_found)
+	{
+		if (psxRegs.pc == boot_address)
+		{
+			const char PSX_NAME[] = "PCSXR";
+
+			debug_event_t ev;
+			ev.eid = PROCESS_START;
+			ev.pid = 1;
+			ev.tid = 1;
+			ev.handled = true;
+			ev.ea = boot_address;
+
+			qstrncpy(ev.modinfo.name, PSX_NAME, sizeof(ev.modinfo.name));
+
+			ev.modinfo.base = boot_address;
+			ev.modinfo.size = 0;
+			ev.modinfo.rebase_to = BADADDR;
+
+			g_events.enqueue(ev, IN_BACK);
+
+			boot_found = true;
+			paused = 1;
+		}
+	}
+#endif
     if (!debugger_active || reset || resetting)
         return;
     if (trace) {
         if (!(--trace)) {
             paused = 1;
+#ifdef C_IDA_DEBUG
+			debug_event_t ev;
+			ev.eid = STEP;
+			ev.pid = 1;
+			ev.tid = 1;
+			ev.handled = true;
+			ev.ea = psxRegs.pc;
+
+			g_events.enqueue(ev, IN_BACK);
+
+			handled_ida_event = true;
+#endif
         }
     }
     if (!paused) {
@@ -401,6 +466,24 @@ void ProcessDebug() {
 		}
 		
         DebugCheckBP(psxRegs.pc, BE);
+#ifdef C_IDA_DEBUG
+		if (paused)
+		{
+			debug_event_t ev;
+			ev.eid = BREAKPOINT;
+			ev.pid = 1;
+			ev.tid = 1;
+			ev.handled = true;
+			ev.ea = psxRegs.pc;
+
+			ev.bpt.hea = ev.ea;
+			ev.bpt.kea = BADADDR;
+
+			g_events.enqueue(ev, IN_BACK);
+
+			handled_ida_event = true;
+		}
+#endif
     }
     if (mapping_e) {
         MarkMap(psxRegs.pc, MAP_EXEC);
@@ -411,6 +494,19 @@ void ProcessDebug() {
             MarkMap(_Rd_, MAP_EXEC_JAL);
         }
     }
+#ifdef C_IDA_DEBUG
+	if (!handled_ida_event && paused)
+	{
+		debug_event_t ev;
+		ev.eid = PROCESS_SUSPEND;
+		ev.pid = 1;
+		ev.tid = 1;
+		ev.handled = true;
+		ev.ea = psxRegs.pc;
+
+		g_events.enqueue(ev, IN_BACK);
+	}
+#endif
     while (paused) {
         GetClient();
         ProcessCommands();

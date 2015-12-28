@@ -1,11 +1,14 @@
-#ifndef _DEBUG_H_
-#define _DEBUG_H_
+#ifndef _IDA_DEBUG_H_
+#define _IDA_DEBUG_H_
 
 #include <Windows.h>
 #include <deque>
 
 #include <ida.hpp>
 #include <idd.hpp>
+
+#define trim trim_
+#undef inline
 
 // Very simple class to store pending events
 enum queue_pos_t

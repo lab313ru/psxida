@@ -45,8 +45,8 @@ int psxInit() {
 
 	if (psxMemInit() == -1) return -1;
 
-	if (Config.Debug)
-		PauseDebugger();
+	/*if (Config.Debug)
+		PauseDebugger();*/
 
 	return psxCpu->Init();
 }

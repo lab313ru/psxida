@@ -64,7 +64,7 @@ _nl_make_l10nflist PARAMS ((struct loaded_l10nfile **l10nfile_list,
 			    const char *filename, int do_allocate));
 
 
-extern const char *_nl_expand_alias PARAMS ((const char *name));
+extern const char * __cdecl _nl_expand_alias PARAMS ((const char *name));
 
 extern int _nl_explode_name PARAMS ((char *name, const char **language,
 				     const char **modifier,

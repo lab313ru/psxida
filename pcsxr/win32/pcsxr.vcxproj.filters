@@ -22,6 +22,9 @@
     <Filter Include="intl">
       <UniqueIdentifier>{2fc9bc1d-cd0d-4c0e-a6ff-d26d53d52434}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ida">
+      <UniqueIdentifier>{ef4a6a2e-9aa7-4a1a-9e66-9cd65127dd42}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\libpcsxcore\cdriso.c">
@@ -192,6 +195,12 @@
     <ClCompile Include="zlib\zutil.c">
       <Filter>zlib</Filter>
     </ClCompile>
+    <ClCompile Include="ida_pcsxr\ida_debug.cpp">
+      <Filter>ida</Filter>
+    </ClCompile>
+    <ClCompile Include="ida_pcsxr\ida_plugin.cpp">
+      <Filter>ida</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\libpcsxcore\cdriso.h">
@@ -354,6 +363,9 @@
     </ClInclude>
     <ClInclude Include="zlib\zutil.h">
       <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="ida_pcsxr\ida_debug.h">
+      <Filter>ida</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

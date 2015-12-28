@@ -97,7 +97,7 @@ void free ();
 char *getwd ();
 #  define getcwd(buf, max) getwd (buf)
 # else
-char *getcwd ();
+char * __cdecl getcwd ();
 # endif
 # ifndef HAVE_STPCPY
 static char *stpcpy PARAMS ((char *dest, const char *src));

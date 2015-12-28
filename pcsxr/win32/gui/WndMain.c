@@ -16,6 +16,11 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#ifdef C_IDA_DEBUG
+#include "ida_pcsxr\ida_debug.h"
+extern eventlist_t g_events;
+#endif
+
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
@@ -248,6 +253,11 @@ void RunGui() {
 		if (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
+
+#ifndef C_IDA_DEBUG
+			if (msg.message == WM_QUIT)
+				break;
+#endif
 		}
 		else
 		{
@@ -457,8 +467,12 @@ LRESULT WINAPI MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 					SysClose();
 					SaveConfig();
 					PostQuitMessage(0);
+#ifndef C_IDA_DEBUG
+					break;
+#else
 					exit(0);
 					return TRUE;
+#endif
 
 				case ID_FILE_RUN_CD:
 					SetIsoFile(NULL);
@@ -740,19 +754,46 @@ LRESULT WINAPI MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 			PADhandleKey(wParam);
 			return TRUE;
 
+#ifndef C_IDA_DEBUG
+		case WM_CLOSE:
+			if (Running)
+			{
+				Running = 0;
+				ResumeDebugger();
+				RestoreWindow();
+				AccBreak = 0;
+			}
+#endif
+
 		case WM_DESTROY:
 			if (!AccBreak) {
 				if (Running) ClosePlugins();
 				SysClose();
 				SaveConfig();
 				PostQuitMessage(0);
+#ifndef C_IDA_DEBUG
 				exit(0);
+#else
+				debug_event_t ev;
+				ev.eid = PROCESS_EXIT;
+				ev.pid = 1;
+				ev.handled = true;
+				ev.exit_code = 0;
+
+				g_events.enqueue(ev, IN_BACK);
+
+				TerminateThread(GetCurrentThread(), 0);
+#endif
 			}
 			else AccBreak = 0;
 
 			DeleteObject(hBm);
 			DeleteDC(hdcmem);
+#ifndef C_IDA_DEBUG
+			break;
+#else
 			return TRUE;
+#endif
 
 		case WM_EXITSIZEMOVE:
 			if(Config.SaveWindowPos) {
@@ -764,7 +805,9 @@ LRESULT WINAPI MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 		case WM_QUIT:
 			SaveConfig();
+#ifdef C_IDA_DEBUG
 			exit(0);
+#endif
 			break;
 
 		default:

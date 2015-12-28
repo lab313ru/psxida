@@ -21,6 +21,11 @@
  * PSX assembly interpreter.
  */
 
+#ifdef C_IDA_DEBUG
+#include "ida_pcsxr\ida_debug.h"
+extern eventlist_t g_events;
+#endif
+
 #include "psxcommon.h"
 #include "r3000a.h"
 #include "gte.h"
@@ -41,12 +46,21 @@ static u32 branchPC;
 static inline void execI();
 
 // Subsets
+#ifdef C_IDA_DEBUG
+void (*psxBSC[])();
+void (*psxSPC[])();
+void (*psxREG[])();
+void (*psxCP0[])();
+void (*psxCP2[])();
+void (*psxCP2BSC[])();
+#else
 void (*psxBSC[64])();
 void (*psxSPC[64])();
 void (*psxREG[32])();
 void (*psxCP0[32])();
 void (*psxCP2[64])();
 void (*psxCP2BSC[32])();
+#endif
 
 static void delayRead(int reg, u32 bpc) {
 	u32 rold, rnew;
@@ -746,8 +760,15 @@ void psxLW() {
 	}
 }
 
-u32 LWL_MASK[4] = { 0xffffff, 0xffff, 0xff, 0 };
-u32 LWL_SHIFT[4] = { 24, 16, 8, 0 };
+#ifdef C_IDA_DEBUG
+extern "C"
+{
+#endif
+	u32 LWL_MASK[4] = { 0xffffff, 0xffff, 0xff, 0 };
+	u32 LWL_SHIFT[4] = { 24, 16, 8, 0 };
+#ifdef C_IDA_DEBUG
+};
+#endif
 
 void psxLWL() {
 	u32 addr = _oB_;
@@ -780,8 +801,15 @@ void psxLWL() {
 	*/
 }
 
-u32 LWR_MASK[4] = { 0, 0xff000000, 0xffff0000, 0xffffff00 };
-u32 LWR_SHIFT[4] = { 0, 8, 16, 24 };
+#ifdef C_IDA_DEBUG
+extern "C"
+{
+#endif
+	u32 LWR_MASK[4] = { 0, 0xff000000, 0xffff0000, 0xffffff00 };
+	u32 LWR_SHIFT[4] = { 0, 8, 16, 24 };
+#ifdef C_IDA_DEBUG
+};
+#endif
 
 void psxLWR() {
 	u32 addr = _oB_;
@@ -820,8 +848,15 @@ void psxSB() { psxMemWrite8 (_oB_, _u8 (_rRt_)); }
 void psxSH() { psxMemWrite16(_oB_, _u16(_rRt_)); }
 void psxSW() { psxMemWrite32(_oB_, _u32(_rRt_)); }
 
-u32 SWL_MASK[4] = { 0xffffff00, 0xffff0000, 0xff000000, 0 };
-u32 SWL_SHIFT[4] = { 24, 16, 8, 0 };
+#ifdef C_IDA_DEBUG
+extern "C"
+{
+#endif
+	u32 SWL_MASK[4] = { 0xffffff00, 0xffff0000, 0xff000000, 0 };
+	u32 SWL_SHIFT[4] = { 24, 16, 8, 0 };
+#ifdef C_IDA_DEBUG
+};
+#endif
 
 void psxSWL() {
 	u32 addr = _oB_;
@@ -840,8 +875,15 @@ void psxSWL() {
 	*/
 }
 
-u32 SWR_MASK[4] = { 0, 0xff, 0xffff, 0xffffff };
-u32 SWR_SHIFT[4] = { 0, 8, 16, 24 };
+#ifdef C_IDA_DEBUG
+extern "C"
+{
+#endif
+	u32 SWR_MASK[4] = { 0, 0xff, 0xffff, 0xffffff };
+	u32 SWR_SHIFT[4] = { 0, 8, 16, 24 };
+#ifdef C_IDA_DEBUG
+};
+#endif
 
 void psxSWR() {
 	u32 addr = _oB_;
@@ -1070,8 +1112,16 @@ static void intReset() {
 	psxRegs.ICache_valid = FALSE;
 }
 
+#ifdef C_IDA_DEBUG
+extern "C" int Running;
+#endif
+
 static void intExecute() {
+#ifndef C_IDA_DEBUG
+	while (Running)
+#else
 	for (;;) 
+#endif
 		execI();
 }
 
