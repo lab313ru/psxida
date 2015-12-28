@@ -120,7 +120,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../;./zlib;../libpcsxcore;./glue;./;./gui;./intl;d:/idasdk68/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;__WIN32__;__i386__;_CSTDINT_;PCSXR_VERSION="1.5";ENABLE_NLS;PACKAGE="pcsxr";ENABLE_SIO1API=1;__NT__;__IDP__;C_IDA_DEBUG;USE_DANGEROUS_FUNCTIONS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;_WINDOWS;__WIN32__;__i386__;_CSTDINT_;PCSXR_VERSION="1.5";ENABLE_NLS;PACKAGE="pcsxr";ENABLE_SIO1API=1;__NT__;__IDP__;C_IDA_DEBUG;USE_DANGEROUS_FUNCTIONS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <BrowseInformation>true</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
@@ -158,7 +158,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../;./zlib;../libpcsxcore;./glue;./;./gui;./intl;d:/idasdk68/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;__WIN32__;__i386__;_CSTDINT_;PCSXR_VERSION="1.5";ENABLE_NLS;PACKAGE="pcsxr";ENABLE_SIO1API=1;__NT__;__IDP__;C_IDA_DEBUG;USE_DANGEROUS_FUNCTIONS;__EA64__;PTR64;__X64__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;_WINDOWS;__WIN32__;__i386__;_CSTDINT_;PCSXR_VERSION="1.5";ENABLE_NLS;PACKAGE="pcsxr";ENABLE_SIO1API=1;__NT__;__IDP__;C_IDA_DEBUG;USE_DANGEROUS_FUNCTIONS;__EA64__;PTR64;__X64__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <BrowseInformation>true</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
@@ -198,7 +198,7 @@
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>../;./zlib;../libpcsxcore;./glue;./;./gui;./intl;d:/idasdk68/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;__WIN32__;__i386__;_CSTDINT_;PCSXR_VERSION="1.5";ENABLE_NLS;PACKAGE="pcsxr";ENABLE_SIO1API=1;__NT__;__IDP__;C_IDA_DEBUG;USE_DANGEROUS_FUNCTIONS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;__WIN32__;__i386__;_CSTDINT_;PCSXR_VERSION="1.5";ENABLE_NLS;PACKAGE="pcsxr";ENABLE_SIO1API=1;__NT__;__IDP__;C_IDA_DEBUG;USE_DANGEROUS_FUNCTIONS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
@@ -236,7 +236,7 @@
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>../;./zlib;../libpcsxcore;./glue;./;./gui;./intl;d:/idasdk68/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;__WIN32__;__i386__;_CSTDINT_;PCSXR_VERSION="1.5";ENABLE_NLS;PACKAGE="pcsxr";ENABLE_SIO1API=1;__NT__;__IDP__;C_IDA_DEBUG;USE_DANGEROUS_FUNCTIONS;__EA64__;PTR64;__X64__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;__WIN32__;__i386__;_CSTDINT_;PCSXR_VERSION="1.5";ENABLE_NLS;PACKAGE="pcsxr";ENABLE_SIO1API=1;__NT__;__IDP__;C_IDA_DEBUG;USE_DANGEROUS_FUNCTIONS;__EA64__;PTR64;__X64__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
