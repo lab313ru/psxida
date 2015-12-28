@@ -8,7 +8,6 @@
 #include <idd.hpp>
 
 #define trim trim_
-#undef inline
 
 // Very simple class to store pending events
 enum queue_pos_t

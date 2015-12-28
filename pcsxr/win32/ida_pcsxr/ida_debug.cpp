@@ -5,6 +5,7 @@
 #include <diskio.hpp>
 
 #include "ida_debug.h"
+#include "ida_registers.h"
 
 #include "psxcommon.h"
 #include "r3000a.h"
@@ -24,13 +25,14 @@ extern int add_breakpoint(int type, u32 address);
 ea_t boot_address;
 eventlist_t g_events;
 qthread_t psx_thread = NULL;
+bool process_started = false;
 
 static const char *register_classes[] =
 {
 	"General Purpose Registers",
-	//"Coprocessor0 Registers",
-	//"Cop2 data registers",
-	//"Cop2 control registers",
+	"Coprocessor0 Registers",
+	"Cop2 data registers",
+	"Cop2 control registers",
 	NULL,
 };
 
@@ -45,53 +47,216 @@ register_info_t registers[] =
 	r0, at, v0, v1, a0, a1, a2, a3,
 	t0, t1, t2, t3, t4, t5, t6, t7,
 	s0, s1, s2, s3, s4, s5, s6, s7,
-	t8, t9, k0, k1, gp, sp, s8, ra;
+	t8, t9, k0, k1, gp, sp, fp, ra;
 	*/
 
-	{ disRNameGPR[0x00], REGISTER_READONLY, RC_GP, dt_dword, NULL, 0 },
+	{ "r0", REGISTER_READONLY, RC_GP, dt_dword, NULL, 0 },
 
-	{ disRNameGPR[0x01], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "at", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
 
-	{ disRNameGPR[0x02], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x03], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "v0", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "v1", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
 
-	{ disRNameGPR[0x04], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x05], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x06], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x07], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "a0", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "a1", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "a2", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "a3", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
 
-	{ disRNameGPR[0x08], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x09], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x0A], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x0B], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x0C], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x0D], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x0E], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x0F], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "t0", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "t1", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "t2", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "t3", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "t4", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "t5", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "t6", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "t7", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
 
-	{ disRNameGPR[0x10], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x11], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x12], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x13], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x14], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x15], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x16], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x17], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "s0", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "s1", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "s2", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "s3", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "s4", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "s5", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "s6", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "s7", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
 
-	{ disRNameGPR[0x18], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x19], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "t8", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "t9", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
 
-	{ disRNameGPR[0x1A], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x1B], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "k0", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "k1", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
 
-	{ disRNameGPR[0x1C], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x1D], REGISTER_ADDRESS | REGISTER_SP, RC_GP, dt_dword, NULL, 0 },
-	{ disRNameGPR[0x1E], REGISTER_ADDRESS | REGISTER_FP, RC_GP, dt_dword, NULL, 0 },
+	{ "gp", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "sp", REGISTER_ADDRESS | REGISTER_SP, RC_GP, dt_dword, NULL, 0 },
+	{ "fp", REGISTER_ADDRESS | REGISTER_FP, RC_GP, dt_dword, NULL, 0 },
 	
-	{ disRNameGPR[0x1F], REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "ra", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+
+	{ "LO", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
+	{ "HI", REGISTER_ADDRESS, RC_GP, dt_dword, NULL, 0 },
 
 	{ "PC", REGISTER_ADDRESS | REGISTER_IP, RC_GP, dt_dword, NULL, 0 },
 
+	/*
+	Index,     Random,    EntryLo0,  BPC,
+	Context,   BDA,       PIDMask,   DCIC,
+	BadVAddr,  BDAM,      EntryHi,   BPCM,
+	Status,    Cause,     EPC,       PRid,
+	Config,    LLAddr,    WatchLO,   WatchHI,
+	XContext,  Reserved1, Reserved2, Reserved3,
+	Reserved4, Reserved5, ECC,       CacheErr,
+	TagLo,     TagHi,     ErrorEPC,  Reserved6
+	*/
+
+	{ "Index",     REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "Random",    REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "EntryLo0",  REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "BPC",       REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "Context",   REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "BDA",       REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "PIDMask",   REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "DCIC",      REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "BadVAddr",  REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "BDAM",      REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "EntryHi",   REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "BPCM",      REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "Status",    REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "Cause",     REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "EPC",       REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "PRid",      REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "Config",    REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "LLAddr",    REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "WatchLO",   REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "WatchHI",   REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "XContext",  REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "Reserved1", REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "Reserved2", REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "Reserved3", REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "Reserved4", REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "Reserved5", REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "ECC",       REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "CacheErr",  REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "TagLo",     REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "TagHi",     REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "ErrorEPC",  REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+	{ "Reserved6", REGISTER_ADDRESS, RC_COP0, dt_dword, NULL, 0 },
+
+	/*
+	v0, v1, v2;
+	rgb;
+	otz;
+	ir0, ir1, ir2, ir3;
+	sxy0, sxy1, sxy2, sxyp;
+	sz0, sz1, sz2, sz3;
+	rgb0, rgb1, rgb2;
+	reserved;
+	mac0, mac1, mac2, mac3;
+	irgb, orgb;
+	lzcs, lzcr;
+	*/
+
+	{ "VXY0", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "VZ0",  0, RC_COP2_DATA, dt_dword, NULL, 0 },
+
+	{ "VXY1", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "VZ1",  0, RC_COP2_DATA, dt_dword, NULL, 0 },
+
+	{ "VXY2", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "VZ2",  0, RC_COP2_DATA, dt_dword, NULL, 0 },
+
+	{ "RGB",  0, RC_COP2_DATA, dt_dword, NULL, 0 },
+
+	{ "OTZ",  0, RC_COP2_DATA, dt_dword, NULL, 0 },
+
+	{ "IR0",  0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "IR1",  0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "IR2",  0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "IR3",  0, RC_COP2_DATA, dt_dword, NULL, 0 },
+
+	{ "SXY0", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "SXY1", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "SXY2", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "SXYP", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+
+	{ "SZ0",  0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "SZ1",  0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "SZ2",  0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "SZ3",  0, RC_COP2_DATA, dt_dword, NULL, 0 },
+
+	{ "RGB0", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "RGB1", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "RGB2", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+
+	{ "RES1", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+
+	{ "MAC0", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "MAC1", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "MAC2", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "MAC3", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+
+	{ "IRGB", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "ORGB", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+
+	{ "LZCS", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+	{ "LZCR", 0, RC_COP2_DATA, dt_dword, NULL, 0 },
+
+	/*
+	rMatrix;
+	trX, trY, trZ;
+	lMatrix;
+	rbk, gbk, bbk;
+	cMatrix;
+	rfc, gfc, bfc;
+	ofx, ofy;
+	h;
+	dqa, dqb;
+	zsf3, zsf4;
+	flag;
+	*/
+	{ "R11R12",  0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "R13R21",  0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "R22R23",  0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "R31R32",  0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+
+	{ "R33",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+
+	{ "TRX",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "TRY",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "TRZ",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+
+	{ "L11L12",  0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "L13L21",  0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "L22L23",  0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "L31L32",  0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+
+	{ "L33",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+
+	{ "RBK",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "BBK",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "GBK",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+
+	{ "LR1LR2",  0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "LR3LG1",  0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "LG2LG3",  0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "LB1LB2",  0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+
+	{ "LB3",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+
+	{ "RFC",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "GFC",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "BFC",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+
+	{ "OFX",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "OFY",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+
+	{ "H",       0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "DQA",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "DQB",     0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+
+	{ "ZSF3",    0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+	{ "ZSF4",    0, RC_COP2_CTRL, dt_dword, NULL, 0 },
+
+	{ "FLAG",    0, RC_COP2_CTRL, dt_dword, NULL, 0 },
 };
 
 // Initialize debugger
@@ -160,6 +325,9 @@ static int idaapi start_process(const char *path,
 	const char *input_path,
 	uint32 input_file_crc32)
 {
+	g_events.clear();
+	process_started = false;
+
 	qsnprintf(cmdline, sizeof(cmdline), "%s", args);
 
 	psx_thread = qthread_create(psx_process, NULL);
@@ -201,12 +369,12 @@ static int idaapi prepare_to_pause_process(void)
 static int idaapi psx_exit_process(void)
 {
 	ResumeDebugger();
-	if (Running) ClosePlugins();
+	process_started = false;
 
-	SysClose();
-	SaveConfig();
+	HWND hPcsxr = FindWindowEx(NULL, NULL, "PCSXR Main", NULL);
 
-	term_psx_process();
+	if (hPcsxr != NULL)
+		SendMessage(hPcsxr, WM_CLOSE, 0, 0);
 	return 1;
 }
 
@@ -220,6 +388,18 @@ static gdecode_t idaapi get_debug_event(debug_event_t *event, int timeout_ms)
 		// are there any pending events?
 		if (g_events.retrieve(event))
 		{
+			if (event->eid == PROCESS_START)
+			{
+				if (!process_started)
+				{
+					process_started = true;
+				}
+				else
+				{
+					break;
+				}
+			}
+
 			return g_events.empty() ? GDE_ONE_EVENT : GDE_MANY_EVENTS;
 		}
 		if (g_events.empty())
@@ -246,6 +426,7 @@ static int idaapi continue_after_event(const debug_event_t *event)
 		}
 		break;
 	case PROCESS_EXIT:
+		g_events.clear();
 		term_psx_process();
 		break;
 	}
@@ -312,11 +493,32 @@ static int idaapi read_registers(thid_t tid, int clsmask, regval_t *values)
 {
 	if (clsmask & RC_GP)
 	{
-		for (int i = 0; i < 32; ++i)
+		for (int i = psx_r0; i <= psx_hi; ++i)
 		{
 			values[i].ival = (u32)(psxRegs.GPR.r[i]);
 		}
-		values[32].ival = (u32)psxRegs.pc;
+		values[psx_pc].ival = (u32)psxRegs.pc;
+	}
+	if (clsmask & RC_COP0)
+	{
+		for (int i = psx_Index; i <= psx_Reserved6; ++i)
+		{
+			values[i].ival = (u32)(psxRegs.CP0.r[i - psx_Index]);
+		}
+	}
+	if (clsmask & RC_COP2_DATA)
+	{
+		for (int i = psx_VXY0; i <= psx_LZCR; ++i)
+		{
+			values[i].ival = (u32)(psxRegs.CP2D.r[i - psx_VXY0]);
+		}
+	}
+	if (clsmask & RC_COP2_CTRL)
+	{
+		for (int i = psx_R11R12; i <= psx_FLAG; ++i)
+		{
+			values[i].ival = (u32)(psxRegs.CP2C.r[i - psx_R11R12]);
+		}
 	}
 
 	return 1;
@@ -330,11 +532,30 @@ static int idaapi read_registers(thid_t tid, int clsmask, regval_t *values)
 // This function is called from debthread
 static int idaapi write_register(thid_t tid, int regidx, const regval_t *value)
 {
-	if (regidx >= 0 && regidx < 32)
+	if (regidx >= psx_r0 && regidx <= psx_hi)
 	{
-		psxRegs.GPR.r[regidx] = (u32)(value->ival);
+		psxRegs.GPR.r[regidx - psx_r0] = (u32)(value->ival);
 	}
-	psxRegs.pc = (u32)(value->ival);
+	else if (regidx == psx_pc)
+	{
+		psxRegs.pc = (u32)(value->ival);
+	}
+	else if (regidx >= psx_Index && regidx <= psx_Reserved6)
+	{
+		psxRegs.CP0.r[regidx - psx_Index] = (u32)(value->ival);
+	}
+	else if (regidx >= psx_VXY0 && regidx <= psx_LZCR)
+	{
+		psxRegs.CP2D.r[regidx - psx_VXY0] = (u32)(value->ival);
+	}
+	else if (regidx >= psx_R11R12 && regidx <= psx_FLAG)
+	{
+		psxRegs.CP2C.r[regidx - psx_R11R12] = (u32)(value->ival);
+	}
+	else
+	{
+		return 0;
+	}
 
 	return 1;
 }

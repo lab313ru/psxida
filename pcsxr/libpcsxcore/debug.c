@@ -18,8 +18,8 @@
 #ifdef C_IDA_DEBUG
 #include "ida_pcsxr\ida_debug.h"
 extern eventlist_t g_events;
-static bool handled_ida_event = false;
-static bool boot_found = false;
+bool handled_ida_event = false;
+bool boot_found = false;
 extern ea_t boot_address;
 #endif
 
@@ -337,6 +337,9 @@ breakpoint_t *find_breakpoint_by_addr(u32 address) {
 #endif
 
 void StartDebugger() {
+#ifdef C_IDA_DEBUG
+	boot_found = false;
+#endif
     if (debugger_active)
         return;
 
@@ -495,7 +498,7 @@ void ProcessDebug() {
         }
     }
 #ifdef C_IDA_DEBUG
-	if (!handled_ida_event && paused)
+	if (boot_found && !handled_ida_event && paused)
 	{
 		debug_event_t ev;
 		ev.eid = PROCESS_SUSPEND;

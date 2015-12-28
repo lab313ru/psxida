@@ -1,4 +1,5 @@
 #define VERSION "1.0.0"
+#define NAME "PsxIda"
 
 #include <ida.hpp>
 #include <dbg.hpp>
@@ -10,7 +11,7 @@ static bool plugin_inited;
 
 static void print_version()
 {
-	static const char format[] = "PCSXR debugger plugin v%s;\nAuthor: Dr. MefistO [Lab 313] <meffi@lab313.ru>.";
+	static const char format[] = NAME " debugger plugin v%s;\nAuthor: Dr. MefistO [Lab 313] <meffi@lab313.ru>.";
 	info(format, VERSION);
 	msg(format, VERSION);
 }
@@ -55,12 +56,12 @@ static void idaapi run(int /*arg*/)
 }
 
 //--------------------------------------------------------------------------
-char comment[] = "PCSXR debugger plugin by Dr. MefistO.";
+char comment[] = NAME " debugger plugin by Dr. MefistO.";
 
 char help[] =
-"PCSXR debugger plugin by Dr. MefistO.\n"
+NAME " debugger plugin by Dr. MefistO.\n"
 "\n"
-"This module lets you debug PSX games in IDA.\n";
+"This module lets you to debug PS1 games in IDA.\n";
 
 //--------------------------------------------------------------------------
 //
@@ -83,7 +84,7 @@ plugin_t PLUGIN =
 
 	help, // multiline help about the plugin
 
-	"PCSXR debugger plugin", // the preferred short name of the plugin
+	NAME " debugger plugin", // the preferred short name of the plugin
 
 	"" // the preferred hotkey to run the plugin
 };
