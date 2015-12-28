@@ -198,8 +198,12 @@
     <ClCompile Include="intl\textdomain.c">
       <Filter>intl</Filter>
     </ClCompile>
-    <ClCompile Include="ida_pcsxr\ida_debug.cpp" />
-    <ClCompile Include="ida_pcsxr\ida_plugin.cpp" />
+    <ClCompile Include="psxida\ida_debug.cpp">
+      <Filter>ida</Filter>
+    </ClCompile>
+    <ClCompile Include="psxida\ida_plugin.cpp">
+      <Filter>ida</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\libpcsxcore\cdriso.h">
@@ -363,8 +367,12 @@
     <ClInclude Include="intl\loadinfo.h">
       <Filter>intl</Filter>
     </ClInclude>
-    <ClInclude Include="ida_pcsxr\ida_registers.h" />
-    <ClInclude Include="ida_pcsxr\ida_debug.h" />
+    <ClInclude Include="psxida\ida_debug.h">
+      <Filter>ida</Filter>
+    </ClInclude>
+    <ClInclude Include="psxida\ida_registers.h">
+      <Filter>ida</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="gui\about.bmp">

@@ -562,8 +562,8 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release_x64|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="ida_pcsxr\ida_debug.cpp" />
-    <ClCompile Include="ida_pcsxr\ida_plugin.cpp" />
+    <ClCompile Include="psxida\ida_debug.cpp" />
+    <ClCompile Include="psxida\ida_plugin.cpp" />
     <ClCompile Include="intl\bindtextdom.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug_x64|Win32'">CompileAsC</CompileAs>
@@ -757,8 +757,8 @@
     <ClInclude Include="gui\Win32.h" />
     <ClInclude Include="glue\stdint.h" />
     <ClInclude Include="glue\sys\mman.h" />
-    <ClInclude Include="ida_pcsxr\ida_registers.h" />
-    <ClInclude Include="ida_pcsxr\ida_debug.h" />
+    <ClInclude Include="psxida\ida_registers.h" />
+    <ClInclude Include="psxida\ida_debug.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="intl\gettext.h" />
     <ClInclude Include="intl\gettextP.h" />
