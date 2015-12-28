@@ -22,7 +22,7 @@
  */
 
 #ifdef C_IDA_DEBUG
-#include "ida_pcsxr\ida_debug.h"
+#include "psxida\ida_debug.h"
 extern eventlist_t g_events;
 #endif
 
